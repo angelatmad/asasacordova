@@ -1,0 +1,37 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --soft-light-red: #E8A0A0;
+    --blush-bg: #FCEBEC;
+    --very-light-rose: #FFF5F5;
+    --muted-rose: #C96B6B;
+    --warm-offwhite: #FFFAF8;
+    --warm-beige: #F1E5DF;
+    --charcoal: #292929;
+    --secondary-text: #716767;
+  }
+
+  body {
+    font-family: "DM Sans", sans-serif;
+    background-color: #FFFAF8;
+    color: #292929;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: "Playfair Display", serif;
+    color: #292929;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
