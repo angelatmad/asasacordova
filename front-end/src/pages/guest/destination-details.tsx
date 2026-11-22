@@ -24,7 +24,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import DestinationMap from "@/components/guest/destination-map";
-import { fetchDestinationBySlug, type Destination } from "@/lib/destination-api";
+
+import {
+  API_BASE_URL,
+  fetchDestinationBySlug,
+  type Destination,
+} from "@/lib/destination-api";
+
 import type { VisitRecord } from "@/lib/user-data";
 import {
   addVisit,
@@ -98,7 +104,7 @@ function DestinationDetailsPage() {
   // useCallback keeps this request function stable until the slug changes.
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destinations/${slug}/reviews`, {
+      const res = await fetch(`${API_BASE_URL}/api/destinations/${slug}/reviews`, {
         headers: {
           Accept: "application/json",
         },
@@ -153,7 +159,7 @@ function DestinationDetailsPage() {
     let active = true;
 
     if (slug) {
-      fetch(`http://127.0.0.1:8000/api/destinations/${slug}/reviews`, {
+      fetch(`${API_BASE_URL}/api/destinations/${slug}/reviews`, {
         headers: { Accept: "application/json" },
       })
         .then((res) => (res.ok ? res.json() : Promise.resolve([])))
@@ -262,7 +268,7 @@ function DestinationDetailsPage() {
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destinations/${slug}/reviews`, {
+      const res = await fetch(`${API_BASE_URL}/api/destinations/${slug}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -292,7 +298,7 @@ function DestinationDetailsPage() {
   async function handleEditReviewSubmit(reviewId: number) {
     setActionError("");
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destination-reviews/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/destination-reviews/${reviewId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -320,7 +326,7 @@ function DestinationDetailsPage() {
   async function handleDeleteReview(reviewId: number) {
     setActionError("");
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destination-reviews/${reviewId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/destination-reviews/${reviewId}`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
@@ -345,7 +351,7 @@ function DestinationDetailsPage() {
     if (!replyContent.trim()) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destination-reviews/${reviewId}/replies`, {
+      const res = await fetch(`${API_BASE_URL}/api/destination-reviews/${reviewId}/replies`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -371,7 +377,7 @@ function DestinationDetailsPage() {
   async function handleEditReplySubmit(replyId: number) {
     setActionError("");
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destination-review-replies/${replyId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/destination-review-replies/${replyId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -396,7 +402,7 @@ function DestinationDetailsPage() {
   async function handleDeleteReply(replyId: number) {
     setActionError("");
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/destination-review-replies/${replyId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/destination-review-replies/${replyId}`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",

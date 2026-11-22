@@ -15,7 +15,10 @@ import gilutonganImage from "@/assets/images/gilutongan.jpg";
 import cclexImage from "@/assets/images/cclex.jpeg";
 
 // Vite replaces this value at build time. The fallback targets local Laravel.
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
+).replace(/\/$/, "");
+
 
 // Laravel stores paths like "images/roses.jpg". Importing the files here lets
 // Vite bundle them, and this map turns a stored path into a usable browser URL.
