@@ -63,6 +63,7 @@ RUN mkdir -p \
 # Render provides the PORT environment variable.
 EXPOSE 10000
 
-# Run pending database migrations before starting Apache.
-# Apache starts only if the migrations complete successfully.
-CMD ["sh", "-c", "php artisan migrate --force && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+# Run pending migrations before starting Apache.
+# Import saved destinations and culture events only when explicitly enabled.
+# Apache starts only if migrations and any requested import succeed.
+CMD ["sh", "-c", "php artisan migrate --force && if [ \"${ASC_IMPORT_CONTENT:-false}\" = \"true\" ]; then php artisan asc:import-content || exit 1; fi && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
