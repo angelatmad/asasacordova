@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libicu-dev \
     libzip-dev \
+    libonig-dev \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
@@ -60,7 +61,6 @@ RUN mkdir -p \
     && chmod -R ug+rwx storage bootstrap/cache
 
 # Render provides the PORT environment variable.
-# Apache will listen on that port when the container starts.
 EXPOSE 10000
 
 CMD ["sh", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
