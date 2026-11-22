@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { Eye, EyeOff } from "lucide-react";
 
 import AuthShell from "@/components/auth/auth-shell";
 import { registerRequest } from "@/lib/auth";
@@ -11,6 +12,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // Tracks whether the password is shown as plain text.
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,8 +43,10 @@ function SignupPage() {
         confirmPassword
       );
 
-      const token = (res as any)?.token || "demo_token_active";
-      const user = (res as any)?.user;
+      // The API response is typed, so token and user can be read directly.
+      const token = res.token || "demo_token_active";
+      const user = res.user;
+      // Keep the token so the new user is signed in right after signup.
       localStorage.setItem("asc_token", token);
       localStorage.setItem("asc_user_email", user?.email || email);
       localStorage.setItem("asc_user_name", user?.name || name);
@@ -74,7 +78,7 @@ function SignupPage() {
         <div>
           <label
             htmlFor="name"
-            className="mb-2 block text-sm font-semibold text-[#292929]"
+            className="mb-2 block text-sm font-semibold text-[#58111A]"
           >
             Full Name
           </label>
@@ -87,14 +91,14 @@ function SignupPage() {
             placeholder="Enter your full name"
             autoComplete="name"
             required
-            className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+            className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
           />
         </div>
 
         <div>
           <label
             htmlFor="email"
-            className="mb-2 block text-sm font-semibold text-[#292929]"
+            className="mb-2 block text-sm font-semibold text-[#58111A]"
           >
             Email Address
           </label>
@@ -107,14 +111,14 @@ function SignupPage() {
             placeholder="Enter your email address"
             autoComplete="email"
             required
-            className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+            className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
           />
         </div>
 
         <div>
           <label
             htmlFor="password"
-            className="mb-2 block text-sm font-semibold text-[#292929]"
+            className="mb-2 block text-sm font-semibold text-[#58111A]"
           >
             Password
           </label>
@@ -128,15 +132,21 @@ function SignupPage() {
               placeholder="At least 8 characters"
               autoComplete="new-password"
               required
-              className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 pr-16 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+              className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 pr-16 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
             />
 
+            {/* Switches the input between hidden and visible; the label helps screen readers. */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#C96B6B]"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#800020]"
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? (
+                <EyeOff size={18} strokeWidth={2} aria-hidden="true" />
+              ) : (
+                <Eye size={18} strokeWidth={2} aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
@@ -144,7 +154,7 @@ function SignupPage() {
         <div>
           <label
             htmlFor="confirmPassword"
-            className="mb-2 block text-sm font-semibold text-[#292929]"
+            className="mb-2 block text-sm font-semibold text-[#58111A]"
           >
             Confirm Password
           </label>
@@ -159,12 +169,12 @@ function SignupPage() {
             placeholder="Re-enter your password"
             autoComplete="new-password"
             required
-            className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+            className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
           />
         </div>
 
         {error && (
-          <p className="rounded-xl bg-[#FCEBEC] p-3 text-sm text-[#C96B6B]">
+          <p className="rounded-xl bg-[#FFF0F2] p-3 text-sm text-[#800020]">
             {error}
           </p>
         )}
@@ -172,17 +182,17 @@ function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-[#C96B6B] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#292929] disabled:opacity-60 shadow-md"
+          className="w-full rounded-xl bg-[#800020] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#58111A] disabled:opacity-60 shadow-md"
         >
           {isLoading ? "Creating Account..." : "Create Account"}
         </button>
       </form>
 
-      <p className="mt-7 text-center text-sm text-[#716767]">
+      <p className="mt-7 text-center text-sm text-[#7A585B]">
         Already have an account?{" "}
         <Link
           to="/login"
-          className="font-semibold text-[#C96B6B] hover:underline"
+          className="font-semibold text-[#800020] hover:underline"
         >
           Sign In
         </Link>

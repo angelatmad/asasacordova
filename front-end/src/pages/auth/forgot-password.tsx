@@ -138,7 +138,7 @@ function ForgotPasswordPage() {
           <div>
             <label
               htmlFor="email"
-              className="mb-2 block text-sm font-semibold text-[#292929]"
+              className="mb-2 block text-sm font-semibold text-[#58111A]"
             >
               Registered Email Address
             </label>
@@ -151,14 +151,14 @@ function ForgotPasswordPage() {
               placeholder="Enter your email address"
               autoComplete="email"
               required
-              className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+              className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl bg-[#C96B6B] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#292929] disabled:opacity-60 shadow-md"
+            className="w-full rounded-xl bg-[#800020] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#58111A] disabled:opacity-60 shadow-md"
           >
             {isLoading ? "Sending..." : "Send Verification Code"}
           </button>
@@ -170,7 +170,7 @@ function ForgotPasswordPage() {
           <div>
             <label
               htmlFor="code"
-              className="mb-2 block text-sm font-semibold text-[#292929]"
+              className="mb-2 block text-sm font-semibold text-[#58111A]"
             >
               Verification Code
             </label>
@@ -186,10 +186,10 @@ function ForgotPasswordPage() {
               }
               placeholder="Enter the 6-digit code"
               required
-              className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-center text-lg tracking-[0.4em] text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+              className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-center text-lg tracking-[0.4em] text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
             />
 
-            <p className="mt-2 text-xs text-[#716767]">
+            <p className="mt-2 text-xs text-[#7A585B]">
               Check your email for the verification code.
             </p>
           </div>
@@ -197,7 +197,7 @@ function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isLoading || code.length !== 6}
-            className="w-full rounded-xl bg-[#C96B6B] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#292929] disabled:opacity-60 shadow-md"
+            className="w-full rounded-xl bg-[#800020] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#58111A] disabled:opacity-60 shadow-md"
           >
             {isLoading ? "Verifying..." : "Verify Code"}
           </button>
@@ -210,7 +210,7 @@ function ForgotPasswordPage() {
               setError("");
               setMessage("");
             }}
-            className="w-full text-sm font-semibold text-[#C96B6B] hover:underline"
+            className="w-full text-sm font-semibold text-[#800020] hover:underline"
           >
             Change Email Address
           </button>
@@ -222,7 +222,7 @@ function ForgotPasswordPage() {
           <div>
             <label
               htmlFor="password"
-              className="mb-2 block text-sm font-semibold text-[#292929]"
+              className="mb-2 block text-sm font-semibold text-[#58111A]"
             >
               New Password
             </label>
@@ -235,14 +235,14 @@ function ForgotPasswordPage() {
               placeholder="Enter your new password"
               autoComplete="new-password"
               required
-              className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+              className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
             />
           </div>
 
           <div>
             <label
               htmlFor="confirmPassword"
-              className="mb-2 block text-sm font-semibold text-[#292929]"
+              className="mb-2 block text-sm font-semibold text-[#58111A]"
             >
               Confirm New Password
             </label>
@@ -257,14 +257,14 @@ function ForgotPasswordPage() {
               placeholder="Confirm your new password"
               autoComplete="new-password"
               required
-              className="w-full rounded-xl border border-[#F1E5DF] bg-[#FFFAF8] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#C96B6B] focus:ring-1 focus:ring-[#C96B6B]"
+              className="w-full rounded-xl border border-[#EBD5D3] bg-[#FAF6F5] px-4 py-3 text-sm text-[#292929] outline-none transition focus:border-[#800020] focus:ring-1 focus:ring-[#800020]"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl bg-[#C96B6B] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#292929] disabled:opacity-60 shadow-md"
+            className="w-full rounded-xl bg-[#800020] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#58111A] disabled:opacity-60 shadow-md"
           >
             {isLoading ? "Updating..." : "Reset Password"}
           </button>
@@ -272,22 +272,22 @@ function ForgotPasswordPage() {
       )}
 
       {message && (
-        <p className="mt-4 rounded-xl bg-[#FCEBEC] p-3 text-sm leading-6 text-[#C96B6B]">
+        <p className="mt-4 rounded-xl bg-[#FFF0F2] p-3 text-sm leading-6 text-[#800020]">
           {message}
         </p>
       )}
 
       {error && (
-        <p className="mt-4 rounded-xl bg-[#FCEBEC] p-3 text-sm text-[#C96B6B]">
+        <p className="mt-4 rounded-xl bg-[#FFF0F2] p-3 text-sm text-[#800020]">
           {error}
         </p>
       )}
 
-      <p className="mt-7 text-center text-sm text-[#716767]">
+      <p className="mt-7 text-center text-sm text-[#7A585B]">
         Remember your password?{" "}
         <Link
           to="/login"
-          className="font-semibold text-[#C96B6B] hover:underline"
+          className="font-semibold text-[#800020] hover:underline"
         >
           Sign In
         </Link>

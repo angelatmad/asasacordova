@@ -6,6 +6,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Outlet,
   useLocation,
 } from "react-router";
 
@@ -24,6 +25,46 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import AboutPage from "@/pages/guest/about";
 import ProfilePage from "@/pages/guest/profile";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AdminRoute } from "@/components/auth/admin-route";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+
+import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminDestinationsPage from "@/pages/admin/destinations";
+import AdminEventsPage from "@/pages/admin/events";
+import AdminUsersPage from "@/pages/admin/users";
+import AdminReviewsPage from "@/pages/admin/reviews";
+import AdminAnalyticsPage from "@/pages/admin/analytics";
+import AdminProfilePage from "@/pages/admin/profile";
+
+// Pages where the floating AI chat should not appear.
+const AUTH_PATHS = ["/login", "/signup", "/forgot-password"];
+// Admin pages also hide the guest AI chat.
+const ADMIN_PATHS = ["/admin"];
+
+// The AI chat is only available to logged-in users, never on the auth pages.
+function AuthOnlyAssistant() {
+  const { pathname } = useLocation();
+  // A saved token means the user is signed in.
+  const isLoggedIn = Boolean(localStorage.getItem("asc_token"));
+
+  // Check admin pages too, including nested routes like /admin/events.
+  const isAdminPath = ADMIN_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+
+  if (!isLoggedIn || AUTH_PATHS.includes(pathname) || isAdminPath) return null;
+
+  return <AscAiAssistant />;
+}
+
+// One guard wraps every member page, so we do not repeat it on each route.
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <Outlet />
+    </ProtectedRoute>
+  );
+}
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -39,9 +80,10 @@ function ScrollManager() {
           block: "start",
         });
       } else {
+        // "instant" jumps to the top right away after navigation.
         window.scrollTo({
           top: 0,
-          behavior: "auto",
+          behavior: "instant",
         });
       }
 
@@ -50,7 +92,7 @@ function ScrollManager() {
 
     window.scrollTo({
       top: 0,
-      behavior: "auto",
+      behavior: "instant",
     });
   }, [pathname, hash]);
 
@@ -59,42 +101,25 @@ function ScrollManager() {
 
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter useTransitions={false}>
       <ScrollManager />
 
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        {/* Visitors can browse these pages without an account. */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/destinations" element={<DestinationsPage />} />
+        <Route path="/destinations/:slug" element={<DestinationDetailsPage />} />
+        <Route path="/culture" element={<CultureEventsPage />} />
+        <Route path="/map" element={<CentralMapPage />} />
+        <Route path="/about" element={<AboutPage />} />
 
-        <Route
-          path="/destinations"
-          element={<ProtectedRoute><DestinationsPage /></ProtectedRoute>}
-        />
-
-        <Route
-          path="/destinations/:slug"
-          element={<ProtectedRoute><DestinationDetailsPage /></ProtectedRoute>}
-        />
-
-        <Route
-          path="/culture"
-          element={<ProtectedRoute><CultureEventsPage /></ProtectedRoute>}
-        />
-
-        <Route
-          path="/map"
-          element={<ProtectedRoute><CentralMapPage /></ProtectedRoute>}
-        />
-
-        <Route
-          path="/favorites"
-          element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>}
-        />
-
-        <Route
-          path="/visited"
-          element={<ProtectedRoute><VisitedPage /></ProtectedRoute>}
-        />
+        {/* These personal pages still require a signed-in user. */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/visited" element={<VisitedPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
 
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -104,11 +129,19 @@ export function App() {
           element={<ForgotPasswordPage />}
         />
 
-        <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        {/* Admin pages use a separate guard and layout. */}
+        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/destinations" element={<AdminDestinationsPage />} />
+          <Route path="/admin/events" element={<AdminEventsPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/profile" element={<AdminProfilePage />} />
+        </Route>
       </Routes>
 
-      <AscAiAssistant />
+      <AuthOnlyAssistant />
     </BrowserRouter>
   );
 }

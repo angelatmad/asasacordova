@@ -1,37 +1,38 @@
-
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap');
 
 @import "tailwindcss";
 
 @layer base {
   :root {
-    --soft-light-red: #E8A0A0;
-    --blush-bg: #FCEBEC;
-    --very-light-rose: #FFF5F5;
-    --muted-rose: #C96B6B;
-    --warm-offwhite: #FFFAF8;
-    --warm-beige: #F1E5DF;
+    --primary-maroon: #800020;
+    --dark-maroon: #58111A;
+    --secondary-maroon: #722F37;
+    --light-blush: #F2DCDA;
+    --very-light-blush: #FFF0F2;
+    --warm-offwhite: #FAF6F5;
+    --warm-beige: #EBD5D3;
     --charcoal: #292929;
-    --secondary-text: #716767;
+    --muted-text: #7A585B;
   }
 
   body {
     font-family: "DM Sans", sans-serif;
-    background-color: #FFFAF8;
-    color: #292929;
+    background-color: var(--warm-offwhite);
+    color: var(--charcoal);
   }
 
   h1,
   h2,
   h3,
   h4,
+  h5,
+  h6,
   .font-display {
     font-family: "Playfair Display", serif;
-    color: #292929;
+    color: var(--dark-maroon);
   }
 
   html {
     scroll-behavior: smooth;
   }
 }
-

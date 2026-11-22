@@ -1,3 +1,4 @@
+// A traveler rating saved in the browser when the user is not signed in.
 export type Review = {
   id: string;
   destinationSlug: string;
@@ -9,12 +10,14 @@ export type Review = {
   date: string;
 };
 
+// One destination's visit count and most recent visit date.
 export type VisitRecord = {
   destinationSlug: string;
   count: number;
   lastVisitedDate: string;
 };
 
+// Guest favorites live in localStorage so they survive a page refresh.
 export function getFavorites(): string[] {
   try {
     const stored = localStorage.getItem("asc_favorites");
@@ -25,20 +28,23 @@ export function getFavorites(): string[] {
   }
 }
 
-export function toggleFavorite(slug: string): string[] {
-  const current = getFavorites();
-  let updated: string[];
-  if (current.includes(slug)) {
-    updated = current.filter((s) => s !== slug);
-  } else {
-    updated = [...current, slug];
-  }
+// Save a favorite list, removing duplicates so a slug appears only once.
+export function setFavorites(slugs: string[]): string[] {
+  const updated = Array.from(new Set(slugs));
   try {
     localStorage.setItem("asc_favorites", JSON.stringify(updated));
   } catch (e) {
     console.error(e);
   }
   return updated;
+}
+
+// Add or remove one slug, then reuse setFavorites to store the clean list.
+export function toggleFavorite(slug: string): string[] {
+  const current = getFavorites();
+  return setFavorites(
+    current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]
+  );
 }
 
 export function getVisitedRecords(): Record<string, VisitRecord> {
@@ -51,8 +57,20 @@ export function getVisitedRecords(): Record<string, VisitRecord> {
   }
 }
 
+// Store the whole visit map; user-data-api reuses this after loading from Laravel.
+export function setVisitedRecords(records: Record<string, VisitRecord>): Record<string, VisitRecord> {
+  try {
+    localStorage.setItem("asc_visited", JSON.stringify(records));
+  } catch (e) {
+    console.error(e);
+  }
+  return records;
+}
+
+// Increase the count by one and stamp today's date in a readable format.
 export function recordVisit(slug: string): Record<string, VisitRecord> {
   const records = getVisitedRecords();
+  // A first visit starts from zero so the increment below becomes one.
   const existing = records[slug] || { destinationSlug: slug, count: 0, lastVisitedDate: "" };
   const updated: VisitRecord = {
     destinationSlug: slug,
@@ -83,6 +101,7 @@ export function removeVisit(slug: string): Record<string, VisitRecord> {
   return records;
 }
 
+// Each destination has its own storage key so reviews do not mix between places.
 export function getReviews(slug: string): Review[] {
   try {
     const stored = localStorage.getItem(`asc_reviews_${slug}`);
@@ -172,6 +191,7 @@ export function getReviews(slug: string): Review[] {
   ];
 }
 
+// Add a new review at the top so the newest feedback is seen first.
 export function addReview(slug: string, rating: number, comment: string, authorName = "Visitor", authorEmail = ""): Review[] {
   const existing = getReviews(slug);
   const newRev: Review = {
@@ -192,6 +212,7 @@ export function addReview(slug: string, rating: number, comment: string, authorN
   return updated;
 }
 
+// Remove one review by id and save the remaining list for this slug.
 export function deleteReview(slug: string, reviewId: string): Review[] {
   const existing = getReviews(slug);
   const updated = existing.filter((r) => r.id !== reviewId);

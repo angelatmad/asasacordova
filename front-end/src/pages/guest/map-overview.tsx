@@ -1,6 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
+  ArrowRight,
+  Bike,
+  Car,
+  ExternalLink,
+  Footprints,
+  LocateFixed,
+  Search,
+} from "lucide-react";
+import {
   CircleMarker,
   MapContainer,
   Polyline,
@@ -10,7 +19,8 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Navbar from "@/components/common/navbar";
-import { destinations, type Destination } from "@/lib/destinations";
+import type { Destination } from "@/lib/destination-api";
+import { useDestinations } from "@/lib/use-destinations";
 
 type Coordinates = [number, number];
 type TravelMode = "car" | "motorcycle" | "walking";
@@ -100,6 +110,8 @@ function decodePolyline(encoded: string): Coordinates[] {
 }
 
 function CentralMapPage() {
+  // Map pins use published destinations from the API.
+  const { destinations, loading: loadingDestinations } = useDestinations();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedSlug = searchParams.get("slug");
 
@@ -119,6 +131,7 @@ function CentralMapPage() {
   const defaultStart: Coordinates = [10.255, 123.945];
   const effectiveStart: Coordinates = currentLocation || defaultStart;
 
+  // Only places with real latitude and longitude can be shown on the map.
   const verifiedDestinations = useMemo(() => {
     return destinations.filter(
       (item) =>
@@ -127,12 +140,13 @@ function CentralMapPage() {
         Number.isFinite(item.latitude) &&
         Number.isFinite(item.longitude)
     );
-  }, []);
+  }, [destinations]);
 
+  // Recalculate when API data arrives or the URL slug changes.
   const activeDestination: Destination | null = useMemo(() => {
     if (!selectedSlug) return verifiedDestinations[0] || null;
     return destinations.find((d) => d.slug === selectedSlug) || null;
-  }, [selectedSlug, verifiedDestinations]);
+  }, [selectedSlug, destinations, verifiedDestinations]);
 
   const destinationCoordinates: Coordinates | null = useMemo(() => {
     return activeDestination &&
@@ -307,16 +321,16 @@ function CentralMapPage() {
   }, [effectiveStart, destinationCoordinates, canCalculateRoute, travelMode]);
 
   return (
-    <main className="min-h-screen bg-[#F5F3ED]">
+    <main className="min-h-screen bg-[#FAF6F5]">
       <Navbar />
 
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-[#292929] px-6 pb-16 pt-36 text-white sm:px-10">
-        <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full bg-[#C96B6B]/10 blur-3xl" />
-        <div className="absolute -bottom-40 left-10 h-80 w-80 rounded-full bg-[#E8A0A0]/10 blur-3xl" />
+      <section className="relative overflow-hidden bg-[#58111A] px-6 pb-16 pt-36 text-white sm:px-10">
+        <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full bg-[#800020]/10 blur-3xl" />
+        <div className="absolute -bottom-40 left-10 h-80 w-80 rounded-full bg-[#F2DCDA]/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#E8A0A0]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#F2DCDA]">
             Interactive Directory
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold sm:text-5xl lg:text-6xl">
@@ -335,20 +349,27 @@ function CentralMapPage() {
           <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
             <div className="relative w-full">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                🔍
+                <Search size={16} strokeWidth={2} aria-hidden="true" />
               </span>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search map destinations by name, category, or address..."
-                className="w-full rounded-2xl border border-[#F1E5DF] bg-white py-4 pl-12 pr-5 text-sm text-[#292929] outline-none transition placeholder:text-slate-400 focus:border-[#C96B6B] focus:ring-2 focus:ring-[#C96B6B]/10"
+                className="w-full rounded-2xl border border-[#EBD5D3] bg-white py-4 pl-12 pr-5 text-sm text-[#292929] outline-none transition placeholder:text-slate-400 focus:border-[#800020] focus:ring-2 focus:ring-[#800020]/10"
               />
             </div>
 
-            <div className="text-sm font-medium text-[#716767]">
-              Showing <span className="font-bold text-[#292929]">{filteredDestinations.length}</span> of{" "}
-              <span className="font-bold text-[#292929]">{verifiedDestinations.length}</span> mapped places
+            <div className="text-sm font-medium text-[#7A585B]">
+              {/* Wait for destination data before showing the mapped-place count. */}
+              {loadingDestinations ? (
+                "Loading mapped places..."
+              ) : (
+                <>
+                  Showing <span className="font-bold text-[#292929]">{filteredDestinations.length}</span> of{" "}
+                  <span className="font-bold text-[#292929]">{verifiedDestinations.length}</span> mapped places
+                </>
+              )}
             </div>
           </div>
 
@@ -361,8 +382,8 @@ function CentralMapPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`rounded-full px-5 py-2.5 text-xs font-semibold transition ${
                   activeCategory === cat
-                    ? "bg-[#C96B6B] text-white shadow-md shadow-[#C96B6B]/10"
-                    : "border border-[#F1E5DF] bg-white text-[#716767] hover:border-[#C96B6B] hover:text-[#C96B6B]"
+                    ? "bg-[#800020] text-white shadow-md shadow-[#800020]/10"
+                    : "border border-[#EBD5D3] bg-white text-[#7A585B] hover:border-[#800020] hover:text-[#800020]"
                 }`}
               >
                 {cat}
@@ -408,7 +429,7 @@ function CentralMapPage() {
                         pathOptions={{
                           color: "#FFFFFF",
                           weight: isSelected ? 4 : 2,
-                          fillColor: isSelected ? "#D49B45" : "#C96B6B",
+                          fillColor: isSelected ? "#800020" : "#800020",
                           fillOpacity: 1,
                         }}
                         eventHandlers={{
@@ -424,19 +445,19 @@ function CentralMapPage() {
                                 className="mb-3 h-28 w-full rounded-xl object-cover"
                               />
                             )}
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#C96B6B]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#800020]">
                               {dest.category}
                             </p>
-                            <h3 className="font-display text-base font-semibold text-[#292929]">
+                            <h3 className="font-display text-base font-semibold text-[#58111A]">
                               {dest.name}
                             </h3>
-                            <p className="mt-1 text-xs leading-5 text-[#716767] line-clamp-2">
+                            <p className="mt-1 text-xs leading-5 text-[#7A585B] line-clamp-2">
                               {dest.description}
                             </p>
                             <div className="mt-3 flex items-center gap-3">
                               <Link
                                 to={`/destinations/${dest.slug}`}
-                                className="rounded-lg bg-[#C96B6B] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#292929]"
+                                className="rounded-lg bg-[#800020] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#58111A]"
                               >
                                 View Details
                               </Link>
@@ -446,9 +467,12 @@ function CentralMapPage() {
                                 )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#C96B6B] hover:underline"
+                                className="text-xs font-semibold text-[#800020] hover:underline"
                               >
-                                Google Maps ↗
+                                <span className="inline-flex items-center gap-1">
+                                  Google Maps
+                                  <ExternalLink size={16} strokeWidth={2} aria-hidden="true" />
+                                </span>
                               </a>
                             </div>
                           </div>
@@ -464,7 +488,7 @@ function CentralMapPage() {
                     pathOptions={{
                       color: "#FFFFFF",
                       weight: 3,
-                      fillColor: currentLocation ? "#2563EB" : "#C96B6B",
+                      fillColor: currentLocation ? "#2563EB" : "#800020",
                       fillOpacity: 1,
                     }}
                   >
@@ -474,7 +498,7 @@ function CentralMapPage() {
                   {routeCoordinates.length > 1 && (
                     <Polyline
                       positions={routeCoordinates}
-                      pathOptions={{ color: "#C96B6B", weight: 5, opacity: 0.85 }}
+                      pathOptions={{ color: "#800020", weight: 5, opacity: 0.85 }}
                     />
                   )}
                 </MapContainer>
@@ -485,70 +509,87 @@ function CentralMapPage() {
             <aside className="space-y-6">
               {/* Active Destination Card */}
               {activeDestination && (
-                <div className="rounded-3xl border border-[#F1E5DF] bg-white p-6 shadow-sm">
+                <div className="rounded-3xl border border-[#EBD5D3] bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-[#FCEBEC] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#C96B6B]">
+                    <span className="rounded-full bg-[#FFF0F2] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#800020]">
                       {activeDestination.category}
                     </span>
                     <Link
                       to={`/destinations/${activeDestination.slug}`}
-                      className="text-xs font-semibold text-[#C96B6B] hover:underline"
+                      className="text-xs font-semibold text-[#800020] hover:underline"
                     >
-                      View Full Details →
+                      <span className="inline-flex items-center gap-1.5">
+                        View Full Details
+                        <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+                      </span>
                     </Link>
                   </div>
-                  <h3 className="mt-3 font-display text-2xl font-semibold text-[#292929]">
+                  <h3 className="mt-3 font-display text-2xl font-semibold text-[#58111A]">
                     {activeDestination.name}
                   </h3>
-                  <p className="mt-1 text-xs text-[#716767]">
+                  <p className="mt-1 text-xs text-[#7A585B]">
                     {activeDestination.address}
                   </p>
 
-                  <div className="mt-5 border-t border-[#F1E5DF] pt-5">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#C96B6B]">
+                  <div className="mt-5 border-t border-[#EBD5D3] pt-5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#800020]">
                       Travel Mode
                     </p>
                     <div className="mt-3 grid grid-cols-3 gap-2">
+                      {/* Icons replace emojis, but the values sent to routing stay the same. */}
                       {[
-                        { value: "car", label: "🚗 Car" },
-                        { value: "motorcycle", label: "🏍️ Moto" },
-                        { value: "walking", label: "🚶 Walk" },
-                      ].map((mode) => (
-                        <button
-                          key={mode.value}
-                          type="button"
-                          onClick={() => setTravelMode(mode.value as TravelMode)}
-                          className={`rounded-xl border py-2.5 text-xs font-bold transition ${
-                            travelMode === mode.value
-                              ? "border-[#C96B6B] bg-[#C96B6B] text-white"
-                              : "border-[#F1E5DF] bg-[#FFFAF8] text-[#716767] hover:border-[#C96B6B]"
-                          }`}
-                        >
-                          {mode.label}
-                        </button>
-                      ))}
+                        { value: "car", label: "Car", icon: Car },
+                        { value: "motorcycle", label: "Moto", icon: Bike },
+                        { value: "walking", label: "Walk", icon: Footprints },
+                      ].map((mode) => {
+                        const Icon = mode.icon;
+                        return (
+                          <button
+                            key={mode.value}
+                            type="button"
+                            onClick={() => setTravelMode(mode.value as TravelMode)}
+                            className={`rounded-xl border py-2.5 text-xs font-bold transition ${
+                              travelMode === mode.value
+                                ? "border-[#800020] bg-[#800020] text-white"
+                                : "border-[#EBD5D3] bg-[#FAF6F5] text-[#7A585B] hover:border-[#800020]"
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                              {mode.label}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="mt-5 border-t border-[#F1E5DF] pt-5">
-                    <p className="text-xs font-semibold text-[#292929]">Starting Location</p>
-                    <p className="mt-1 text-xs text-[#716767]">{startingLabel}</p>
+                  <div className="mt-5 border-t border-[#EBD5D3] pt-5">
+                    <p className="text-xs font-semibold text-[#58111A]">Starting Location</p>
+                    <p className="mt-1 text-xs text-[#7A585B]">{startingLabel}</p>
 
                     <div className="mt-3 flex flex-col gap-2">
                       <button
                         type="button"
                         onClick={getCurrentLocation}
                         disabled={isLocating}
-                        className="rounded-xl bg-[#292929] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#C96B6B] disabled:opacity-60"
+                        className="rounded-xl bg-[#800020] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#58111A] disabled:opacity-60"
                       >
-                        {isLocating ? "Detecting GPS..." : "◎ Use My Current Location"}
+                        {isLocating ? (
+                          "Detecting GPS..."
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5">
+                            <LocateFixed size={18} strokeWidth={2} aria-hidden="true" />
+                            Use My Current Location
+                          </span>
+                        )}
                       </button>
 
                       {currentLocation && (
                         <button
                           type="button"
                           onClick={resetStartLocation}
-                          className="rounded-xl border border-[#F1E5DF] bg-white px-4 py-2 text-xs font-semibold text-[#716767] transition hover:bg-[#FFFAF8]"
+                          className="rounded-xl border border-[#EBD5D3] bg-white px-4 py-2 text-xs font-semibold text-[#7A585B] transition hover:bg-[#FAF6F5]"
                         >
                           Reset to Town Center
                         </button>
@@ -560,8 +601,8 @@ function CentralMapPage() {
                   </div>
 
                   {/* Route Summary Panel */}
-                  <div className="mt-5 border-t border-[#F1E5DF] pt-5">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#C96B6B]">
+                  <div className="mt-5 border-t border-[#EBD5D3] pt-5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#800020]">
                       Route Summary
                     </p>
 
@@ -580,20 +621,20 @@ function CentralMapPage() {
                     {!isIsland && !isCclex && (
                       <div className="mt-3">
                         {isRouting ? (
-                          <p className="text-xs text-[#716767]">Calculating route...</p>
+                          <p className="text-xs text-[#7A585B]">Calculating route...</p>
                         ) : routeError ? (
                           <p className="text-xs text-red-600">{routeError}</p>
                         ) : routeInfo ? (
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-[#FFFAF8] p-3 text-center border border-[#F1E5DF]">
-                              <p className="text-[10px] uppercase font-semibold text-[#716767]">Est. Time</p>
-                              <p className="mt-1 text-lg font-bold text-[#292929]">
+                            <div className="rounded-xl bg-[#FAF6F5] p-3 text-center border border-[#EBD5D3]">
+                              <p className="text-[10px] uppercase font-semibold text-[#7A585B]">Est. Time</p>
+                              <p className="mt-1 text-lg font-bold text-[#58111A]">
                                 {Math.max(1, Math.round(routeInfo.duration))} min
                               </p>
                             </div>
-                            <div className="rounded-xl bg-[#FFFAF8] p-3 text-center border border-[#F1E5DF]">
-                              <p className="text-[10px] uppercase font-semibold text-[#716767]">Distance</p>
-                              <p className="mt-1 text-lg font-bold text-[#292929]">
+                            <div className="rounded-xl bg-[#FAF6F5] p-3 text-center border border-[#EBD5D3]">
+                              <p className="text-[10px] uppercase font-semibold text-[#7A585B]">Distance</p>
+                              <p className="mt-1 text-lg font-bold text-[#58111A]">
                                 {routeInfo.distance.toFixed(2)} km
                               </p>
                             </div>
@@ -606,11 +647,11 @@ function CentralMapPage() {
               )}
 
               {/* Destination Selector List */}
-              <div className="rounded-3xl border border-[#F1E5DF] bg-white p-6 shadow-sm">
-                <h3 className="font-display text-lg font-semibold text-[#292929]">
+              <div className="rounded-3xl border border-[#EBD5D3] bg-white p-6 shadow-sm">
+                <h3 className="font-display text-lg font-semibold text-[#58111A]">
                   All Mapped Places
                 </h3>
-                <p className="mt-1 text-xs text-[#716767]">
+                <p className="mt-1 text-xs text-[#7A585B]">
                   Select a destination to focus map & calculate route.
                 </p>
 
@@ -624,21 +665,21 @@ function CentralMapPage() {
                         onClick={() => setSearchParams({ slug: dest.slug })}
                         className={`w-full text-left rounded-2xl border p-3.5 transition ${
                           isSelected
-                            ? "border-[#C96B6B] bg-[#FCEBEC]/50 shadow-sm"
-                            : "border-[#F1E5DF] bg-[#FFFAF8]/50 hover:border-[#E8A0A0]"
+                            ? "border-[#800020] bg-[#FFF0F2]/50 shadow-sm"
+                            : "border-[#EBD5D3] bg-[#FAF6F5]/50 hover:border-[#EBD5D3]"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C96B6B]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#800020]">
                             {dest.category}
                           </span>
                           {isSelected && (
-                            <span className="rounded-full bg-[#C96B6B] px-2 py-0.5 text-[9px] font-semibold text-white">
+                            <span className="rounded-full bg-[#800020] px-2 py-0.5 text-[9px] font-semibold text-white">
                               Active
                             </span>
                           )}
                         </div>
-                        <h4 className="mt-1 font-display text-sm font-semibold text-[#292929]">
+                        <h4 className="mt-1 font-display text-sm font-semibold text-[#58111A]">
                           {dest.name}
                         </h4>
                       </button>
