@@ -2,7 +2,7 @@
 # Use PHP 8.4 with Apache as the web server.
 FROM php:8.4-apache
 
-# Set Laravel's public directory as Apache's document root.
+# Set Laravel's public directory as the Apache document root.
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 # Install system libraries and PHP extensions required by Laravel.
@@ -63,4 +63,6 @@ RUN mkdir -p \
 # Render provides the PORT environment variable.
 EXPOSE 10000
 
-CMD ["sh", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+# Run pending database migrations before starting Apache.
+# Apache starts only if the migrations complete successfully.
+CMD ["sh", "-c", "php artisan migrate --force && sed -i \"s/Listen 80/Listen ${PORT:-10000}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT:-10000}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
