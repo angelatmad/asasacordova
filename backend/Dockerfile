@@ -1,6 +1,6 @@
 
-# Use PHP 8.3 with Apache as the web server.
-FROM php:8.3-apache
+# Use PHP 8.4 with Apache as the web server.
+FROM php:8.4-apache
 
 # Set Laravel's public directory as Apache's document root.
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
