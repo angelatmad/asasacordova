@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 
-// Use the configured backend URL so this works on different machines.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { API_BASE_URL } from "@/lib/api-config";
 
 interface AdminRouteProps {
   children: ReactNode;

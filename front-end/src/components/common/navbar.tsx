@@ -24,8 +24,7 @@ import {
   type NotificationItem,
 } from "@/lib/notification-api";
 
-// One backend URL is used for the role check and logout request.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { API_BASE_URL } from "@/lib/api-config";
 
 // This list drives both the desktop links and the mobile menu.
 const navLinks = [

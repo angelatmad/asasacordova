@@ -10,9 +10,7 @@ import {
   toggleFavorite as toggleFavoriteLocal,
   type VisitRecord,
 } from "@/lib/user-data";
-
-// Vite supplies the real API address; the fallback is the local Laravel server.
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+import { API_BASE_URL } from "@/lib/api-config";
 
 // Laravel Sanctum needs the saved token to know which user owns the data.
 function authHeaders(): HeadersInit {

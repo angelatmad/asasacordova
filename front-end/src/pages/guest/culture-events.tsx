@@ -26,13 +26,13 @@ import {
   type CalendarSource,
   type UnifiedCalendarEvent,
 } from "@/lib/calendar";
+import { API_BASE_URL } from "@/lib/api-config";
 
-// Use the configured API URL, or the local Laravel server during development.
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "") + "/api";
+const CULTURE_API_BASE_URL = `${API_BASE_URL}/api`;
 
 // Checks the logged-in user's role so only admins see edit/delete controls.
 async function requestAdminRole(token: string): Promise<boolean> {
-  const res = await fetch(`${API_BASE_URL}/auth/user`, {
+  const res = await fetch(`${CULTURE_API_BASE_URL}/auth/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
@@ -424,7 +424,7 @@ function CultureEventsPage() {
     }
 
     // POST creates a new event; PUT updates the one being edited.
-    const url = editingEvent ? `${API_BASE_URL}/events/${editingEvent.id}` : `${API_BASE_URL}/events`;
+    const url = editingEvent ? `${CULTURE_API_BASE_URL}/events/${editingEvent.id}` : `${CULTURE_API_BASE_URL}/events`;
     const method = editingEvent ? "PUT" : "POST";
 
     try {
@@ -467,7 +467,7 @@ function CultureEventsPage() {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/events/${id}`, {
+      const res = await fetch(`${CULTURE_API_BASE_URL}/events/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

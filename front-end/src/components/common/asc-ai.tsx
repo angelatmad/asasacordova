@@ -12,8 +12,7 @@ import type { CultureItem } from "@/lib/culture";
 import { eventToCultureItem, fetchEvents } from "@/lib/event-api";
 import { useDestinations } from "@/lib/use-destinations";
 
-// Remove a trailing slash so /api/chat never becomes //api/chat.
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+import { API_BASE_URL } from "@/lib/api-config";
 
 // One chat bubble; destinations are optional links under AI replies.
 type Message = {

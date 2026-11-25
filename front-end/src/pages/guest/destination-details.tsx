@@ -32,6 +32,7 @@ import {
   getRatingSummary,
   type Destination,
 } from "@/lib/destination-api";
+import { clearAuthSession, verifyAuthToken } from "@/lib/auth";
 
 import type { VisitRecord } from "@/lib/user-data";
 import {
@@ -94,17 +95,35 @@ function DestinationDetailsPage() {
   const [editReplyContent, setEditReplyContent] = useState("");
   const [confirmDeleteReplyId, setConfirmDeleteReplyId] = useState<number | null>(null);
 
-  const token = localStorage.getItem("asc_token");
+  const [authToken, setAuthToken] = useState<string | null>(() =>
+    localStorage.getItem("asc_token")
+  );
   const storedEmail = localStorage.getItem("asc_user_email") || "";
   const isAdmin = storedEmail.includes("admin") || storedEmail === "admin@asasa-cordova.ph" || localStorage.getItem("asc_is_admin") === "true";
   const currentUserId = Number(localStorage.getItem("asc_user_id") || "0");
 
   // Account-only actions send guests to login and remember this detail page.
   function requireLogin(): boolean {
-    if (token) return true;
+    if (authToken) return true;
     navigate("/login", { state: { from: location } });
     return false;
   }
+
+  useEffect(() => {
+    if (!authToken) return;
+
+    let active = true;
+    verifyAuthToken(authToken).then((isValid) => {
+      if (active && !isValid) {
+        setAuthToken(null);
+        setReviewError("Your session expired. Please sign in again.");
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [authToken]);
 
   // useCallback keeps this request function stable until the slug changes.
   const fetchReviews = useCallback(async () => {
@@ -150,11 +169,11 @@ function DestinationDetailsPage() {
 
   // Saved places and visits belong to signed-in users; guests keep empty state.
   useEffect(() => {
-    if (!token) return;
+    if (!authToken) return;
 
     loadFavorites().then(setFavorites).catch((error) => console.error(error));
     loadVisited().then(setVisitedMap).catch((error) => console.error(error));
-  }, [token]);
+  }, [authToken]);
 
   // active stops an older request from overwriting a newer destination.
   useEffect(() => {
@@ -288,7 +307,7 @@ function DestinationDetailsPage() {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
         body: JSON.stringify({
           rating: newRating,
@@ -297,6 +316,12 @@ function DestinationDetailsPage() {
       });
 
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        clearAuthSession();
+        setAuthToken(null);
+        throw new Error("Your session expired. Please sign in again.");
+      }
 
       if (!res.ok) {
         throw new Error(data.message || "Failed to submit review.");
@@ -318,7 +343,7 @@ function DestinationDetailsPage() {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
         body: JSON.stringify({
           rating: editRating,
@@ -345,7 +370,7 @@ function DestinationDetailsPage() {
         method: "DELETE",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
       });
 
@@ -371,7 +396,7 @@ function DestinationDetailsPage() {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
         body: JSON.stringify({ reply: replyContent }),
       });
@@ -397,7 +422,7 @@ function DestinationDetailsPage() {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
         body: JSON.stringify({ reply: editReplyContent }),
       });
@@ -421,7 +446,7 @@ function DestinationDetailsPage() {
         method: "DELETE",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken ?? ""}`,
         },
       });
 
@@ -829,8 +854,8 @@ function DestinationDetailsPage() {
                   </div>
                 ) : reviewCount > 0 ? (
                   reviews.map((rev) => {
-                    const isOwner = token && rev.user_id === currentUserId;
-                    const canModify = token && (isOwner || isAdmin);
+                    const isOwner = authToken && rev.user_id === currentUserId;
+                    const canModify = authToken && (isOwner || isAdmin);
                     const isEditing = editingReviewId === rev.id;
                     const isReplying = replyingReviewId === rev.id;
 
@@ -969,8 +994,8 @@ function DestinationDetailsPage() {
                         {rev.replies && rev.replies.length > 0 && (
                           <div className="mt-5 space-y-3.5 pl-5 sm:pl-7 border-l-2 border-[#800020]">
                             {rev.replies.map((reply: ReviewReply) => {
-                              const isReplyOwner = token && reply.user_id === currentUserId;
-                              const canModifyReply = token && (isReplyOwner || isAdmin);
+                              const isReplyOwner = authToken && reply.user_id === currentUserId;
+                              const canModifyReply = authToken && (isReplyOwner || isAdmin);
                               const isEditingReply = editingReplyId === reply.id;
 
                               return (
@@ -1068,7 +1093,7 @@ function DestinationDetailsPage() {
                           </div>
                         )}
 
-                        {token && !isReplying && (
+                        {authToken && !isReplying && (
                           <button
                             type="button"
                             onClick={() => setReplyingReviewId(rev.id)}
@@ -1133,7 +1158,7 @@ function DestinationDetailsPage() {
                 </div>
                 <p className="text-xs text-white/70 leading-relaxed">Rate your visit and share your feedback to help future travelers.</p>
 
-                {token ? (
+                {authToken ? (
                   <form onSubmit={handleReviewSubmit} className="mt-6 space-y-5">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-white/80 mb-2">

@@ -1,7 +1,6 @@
-// Laravel runs on 127.0.0.1:8000 during development. The environment variable
-// lets deployment use the real server without changing this file.
-export const ADMIN_API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { API_BASE_URL } from "@/lib/api-config";
+
+export const ADMIN_API_BASE_URL = API_BASE_URL;
 
 // Laravel may return IDs as numbers or strings, so both are allowed.
 export type AdminId = number | string;

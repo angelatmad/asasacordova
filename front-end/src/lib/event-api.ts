@@ -1,7 +1,5 @@
+import { API_BASE_URL } from "@/lib/api-config";
 import type { CultureItem } from "@/lib/culture";
-
-// Use the deployed API when configured, otherwise the local Laravel server.
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 // Event shape returned by Laravel's /api/events route.
 export interface ApiEvent {

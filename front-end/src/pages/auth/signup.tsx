@@ -43,8 +43,10 @@ function SignupPage() {
         confirmPassword
       );
 
-      // The API response is typed, so token and user can be read directly.
-      const token = res.token || "demo_token_active";
+      const token = res.token;
+      if (!token) {
+        throw new Error("Sign-up did not return a valid session token. Please try again.");
+      }
       const user = res.user;
       // Keep the token so the new user is signed in right after signup.
       localStorage.setItem("asc_token", token);

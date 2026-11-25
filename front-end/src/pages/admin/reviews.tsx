@@ -9,6 +9,7 @@ import {
   pageItems,
 } from "@/lib/admin-api";
 import type { AdminFeedback, AdminId, AdminReview } from "@/lib/admin-api";
+import { clearDestinationsCache } from "@/lib/destination-api";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { ErrorState } from "@/components/admin/ErrorState";
@@ -158,6 +159,7 @@ function ReviewsPage() {
       }
 
       setNotice({ type: "success", message: response.message || "Deleted successfully." });
+      clearDestinationsCache();
       setDeleteTarget(null);
       reload();
     } catch (requestError) {

@@ -133,10 +133,7 @@ Route::get('/destinations', function (Request $request) {
         'municipality' => ['sometimes', 'string', 'max:255'],
     ]);
 
-    // Review totals are calculated in SQL, so cards never show sample ratings.
-    $query = Destination::query()
-        ->withCount('reviews as reviews_count')
-        ->withAvg('reviews as average_rating', 'rating');
+    $query = Destination::query()->with(['validReviews.user']);
 
     if ($request->filled('search')) {
         // % is a wildcard, so LIKE finds the word anywhere in these text columns.
@@ -167,19 +164,21 @@ Route::get('/destinations', function (Request $request) {
         $query->where('municipality', $request->string('municipality')->toString());
     }
 
-    return response()->json($query->orderBy('name')->get());
+    $destinations = $query->orderBy('name')->get()->map(
+        fn (Destination $destination): Destination => $destination->withReviewSummary()
+    );
+
+    return response()->json($destinations);
 });
 
 Route::get('/destinations/{slug}', function (string $slug) {
     // firstOrFail() automatically returns 404 when the slug is not found.
-    // The same review aggregates as the list keep detail ratings consistent.
     $destination = Destination::query()
         ->where('slug', $slug)
-        ->withCount('reviews as reviews_count')
-        ->withAvg('reviews as average_rating', 'rating')
+        ->with(['validReviews.user'])
         ->firstOrFail();
 
-    return response()->json($destination);
+    return response()->json($destination->withReviewSummary());
 });
 
 // Events Routes

@@ -9,6 +9,7 @@ import {
   pageItems,
 } from "@/lib/admin-api";
 import type { AdminDestination, AdminDestinationInput } from "@/lib/admin-api";
+import { clearDestinationsCache } from "@/lib/destination-api";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { DataTable } from "@/components/admin/DataTable";
 import type { DataTableColumn } from "@/components/admin/DataTable";
@@ -270,6 +271,7 @@ function DestinationsPage() {
         message: response.message || (editing ? "Destination updated." : "Destination created."),
       });
       setFormOpen(false);
+      clearDestinationsCache();
       setReloadKey((key) => key + 1);
     } catch (requestError) {
       setFeedback({ type: "error", message: getAdminErrorMessage(requestError) });
@@ -292,6 +294,7 @@ function DestinationsPage() {
         message: response.message || "Destination deleted.",
       });
       setDeleteTarget(null);
+      clearDestinationsCache();
       setReloadKey((key) => key + 1);
     } catch (requestError) {
       setFeedback({ type: "error", message: getAdminErrorMessage(requestError) });

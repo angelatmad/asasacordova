@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { ArrowRight, Heart, Star } from "lucide-react";
 import { loadFavorites, updateFavorite } from "@/lib/user-data-api";
-import { getRatingSummary } from "@/lib/destination-api";
+import {
+  fetchFeaturedReview,
+  getRatingSummary,
+  type FeaturedReview,
+} from "@/lib/destination-api";
 
 // Props are the values the parent page gives this card for one destination.
 type DestinationCardProps = {
@@ -13,6 +17,7 @@ type DestinationCardProps = {
   description: string;
   reviewsCount: number;
   averageRating: number;
+  featuredReview?: FeaturedReview | null;
 };
 
 // One clickable card that links to the destination's detail page.
@@ -24,6 +29,7 @@ function DestinationCard({
   description,
   reviewsCount,
   averageRating,
+  featuredReview,
 }: DestinationCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,6 +51,28 @@ function DestinationCard({
     reviewsCount,
     averageRating,
   });
+
+  const [fetchedFeaturedReview, setFetchedFeaturedReview] = useState<{
+    slug: string;
+    review: FeaturedReview | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (featuredReview || reviewsCount === 0 || !slug) return;
+
+    let active = true;
+    fetchFeaturedReview(slug).then((review) => {
+      if (active) setFetchedFeaturedReview({ slug, review });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [featuredReview, reviewsCount, slug]);
+
+  const visibleFeaturedReview =
+    featuredReview ??
+    (fetchedFeaturedReview?.slug === slug ? fetchedFeaturedReview.review : null);
 
   // Heart action: stop the Link behind it from opening the details page.
   // updateFavorite calls Laravel with the auth token when signed in, otherwise
@@ -69,7 +97,7 @@ function DestinationCard({
       className="group relative block min-w-0 cursor-pointer"
       aria-label={`View details for ${name}`}
     >
-      <article className="relative h-[380px] overflow-hidden rounded-3xl bg-[#FAF6F5] border border-[#EBD5D3] shadow-md transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-xl sm:h-[410px]">
+      <article className="relative h-[440px] overflow-hidden rounded-3xl bg-[#FAF6F5] border border-[#EBD5D3] shadow-md transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-xl sm:h-[460px]">
         {/* If no photo exists, show the first letter so the card still looks complete. */}
         {image ? (
           <img
@@ -145,9 +173,35 @@ function DestinationCard({
               )}
             </div>
 
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#7A585B]">
+            <p
+              className={`mt-1 text-xs leading-relaxed text-[#7A585B] ${
+                visibleFeaturedReview ? "line-clamp-1" : "line-clamp-2"
+              }`}
+            >
               {description}
             </p>
+
+            {visibleFeaturedReview && (
+              <div className="mt-2 rounded-xl border border-[#EBD5D3] bg-white/70 px-2.5 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-[#800020]">
+                    Most common rating
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#800020]">
+                    <Star size={11} strokeWidth={2} fill="currentColor" aria-hidden="true" />
+                    {visibleFeaturedReview.rating}
+                  </span>
+                </div>
+                <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#7A585B]">
+                  “{visibleFeaturedReview.comment}”
+                </p>
+                {visibleFeaturedReview.authorName && (
+                  <p className="mt-1 truncate text-[9px] font-medium text-[#7A585B]">
+                    — {visibleFeaturedReview.authorName}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-[#EBD5D3]">

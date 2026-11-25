@@ -1,6 +1,5 @@
+import { API_BASE_URL } from "@/lib/api-config";
 
-// Vite supplies the Laravel address at build time. Empty means same-origin requests.
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
 // Basic signed-in user data returned by Laravel. "role" decides admin access.
 export type AuthUser = {
@@ -19,6 +18,47 @@ type ApiResponse = {
   // The user object lets the UI greet the person and check the role.
   user?: AuthUser | null;
 };
+
+export function clearAuthSession(): void {
+  localStorage.removeItem("asc_token");
+  localStorage.removeItem("asc_user_email");
+  localStorage.removeItem("asc_user_name");
+  localStorage.removeItem("asc_user_role");
+  localStorage.removeItem("asc_user_id");
+  localStorage.removeItem("asc_is_admin");
+}
+
+export async function verifyAuthToken(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        clearAuthSession();
+        return false;
+      }
+      return true;
+    }
+
+    const user = (await response.json().catch(() => null)) as AuthUser | null;
+    if (!user || typeof user.email !== "string" || user.email === "") {
+      clearAuthSession();
+      return false;
+    }
+
+    localStorage.setItem("asc_user_email", user.email);
+    localStorage.setItem("asc_user_name", user.name || "Cordova Explorer");
+    localStorage.setItem("asc_user_role", user.role || "user");
+    return true;
+  } catch {
+    return true;
+  }
+}
 
 // Shared POST helper for auth calls. It sends JSON to Laravel and turns a
 // failed response into an Error the auth pages can display.
