@@ -227,10 +227,10 @@ export async function fetchDestinations(force = false): Promise<Destination[]> {
 }
 
 // Try the cached list first; otherwise ask Laravel for one destination by slug.
-export async function fetchDestinationBySlug(slug: string): Promise<Destination | null> {
+export async function fetchDestinationBySlug(slug: string, force = false): Promise<Destination | null> {
   if (!slug) return null;
 
-  if (cachedDestinations) {
+  if (!force && cachedDestinations) {
     const cached = cachedDestinations.find((destination) => destination.slug === slug);
     if (cached) return cached;
   }
@@ -248,7 +248,14 @@ export async function fetchDestinationBySlug(slug: string): Promise<Destination 
   const payload: unknown = await response.json();
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
 
-  return normalizeDestination(payload as Record<string, unknown>);
+  const destination = normalizeDestination(payload as Record<string, unknown>);
+  if (cachedDestinations) {
+    cachedDestinations = cachedDestinations.map((entry) =>
+      entry.slug === destination.slug ? destination : entry
+    );
+  }
+
+  return destination;
 }
 
 // Call this after an admin change so the next load fetches fresh Laravel data.

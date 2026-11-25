@@ -32,7 +32,6 @@ const navLinks = [
   { label: "Home", to: "/home" },
   { label: "Destinations", to: "/destinations" },
   { label: "Culture & Events", to: "/culture" },
-  { label: "About", to: "/about" },
 ];
 
 // Top navigation for signed-in visitors, with extra admin-only controls.

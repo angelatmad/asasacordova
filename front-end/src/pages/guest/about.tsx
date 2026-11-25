@@ -159,26 +159,25 @@ function AboutPage() {
           </h2>
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-[#7A585B]">
-            Official contact details will be added after verification. The
-            placeholders below are clearly labeled so no unconfirmed phone
-            number, email address, or office location is presented as fact.
+            The contact details below are sample information and must be
+            verified before being treated as official.
           </p>
 
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {[
               {
                 label: "Email",
-                value: "Placeholder — replace with official email",
+                value: "asasacordova@gmail.com",
                 icon: Mail,
               },
               {
                 label: "Phone",
-                value: "Placeholder — replace with official phone",
+                value: "09123456789",
                 icon: Phone,
               },
               {
                 label: "Office",
-                value: "Placeholder — replace with verified office address",
+                value: "Cordova Municipal Tourism Office, Cordova, Cebu, Philippines",
                 icon: MapPin,
               },
             ].map((item) => {

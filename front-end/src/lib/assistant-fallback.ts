@@ -1,6 +1,34 @@
 import type { CultureItem } from "@/lib/culture";
 import type { Destination } from "@/lib/destination-api";
 
+const OUT_OF_SCOPE_REPLY =
+  "I'm sorry, I'm not authorized to answer questions outside the Asa Sa Cordova system. I can help you with destinations, local events, tourism information, and features available in Asa Sa Cordova.";
+
+const OUT_OF_SCOPE_PATTERNS = [
+  /\b(president|presidency|prime minister|senator|congress|politics|political|elections?|capital of|capitol)\b/u,
+  /\b(photosynthesis|mitosis|meiosis|quantum|gravity|evolution|periodic table|chemistry|physics|biology|mathematics|math)\b/u,
+  /\b(latest news|headlines|current affairs|weather|forecast|traffic|sports|scores?|movies?|celebrities)\b/u,
+  /\b(ignore|disregard|forget)\b.{0,60}\b(rules|instructions|restriction|scope|prompt|asa sa cordova)\b/u,
+  /\b(pretend|roleplay|role play|act as|you are now|developer mode|general assistant|unrestricted)\b/u,
+  /\b(system prompt|api key|secret key|credentials|internal configuration)\b/u,
+  /\d+\s*(?:\+|-|\*|\/|x|×|÷)\s*\d+/u,
+];
+
+const ALLOWED_TOPIC_PATTERNS = [
+  /\b(hi|hello|hey|greetings?|mabuhay|good (morning|afternoon|evening))\b/u,
+  /\b(asa sa cordova|asc|cordova)\b/u,
+  /\b(destinations?|places?|spots?|attractions?|landmarks?|resorts?|hotels?|restaurants?|beaches?|islands?|food parks?)\b/u,
+  /\b(favorites?|favourites?|visited|reviews?|ratings?|feedback|profile|notifications?|maps?|routes?|route guide|website|features?|system|assistant|chat)\b/u,
+  /\b(culture|cultural|festivals?|fiestas?|events?|holidays?|schedules?|calendar|hours?|entrance fees?|addresses?|contacts?|operating days?|facilities|itinerary)\b/u,
+  /\b(tourism|tourist|travel|trip|visiting|how do i|how can i)\b/u,
+];
+
+const EVENT_INTENT_PATTERN =
+  /\b(events?|festivals?|fiestas?|cultural|culture|calendar|schedule|scheduled|happening|celebrations?|activities)\b/u;
+
+const DATE_PATTERN =
+  /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:,?\s+\d{4})?|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}\b/giu;
+
 // Chat history passed from the assistant UI. Only user and assistant messages matter.
 export type AssistantChatMessage = {
   role: "user" | "assistant";
@@ -97,6 +125,73 @@ function termPosition(normalizedText: string, normalizedTerm: string): number {
 
 function containsTerm(normalizedText: string, normalizedTerm: string): boolean {
   return termPosition(normalizedText, normalizedTerm) >= 0;
+}
+
+function hasKnownRecord(
+  normalizedText: string,
+  destinations: Destination[],
+  cultureItems: CultureItem[]
+): boolean {
+  const records = [
+    ...destinations.flatMap((destination) => [
+      destination.name,
+      ...(destination.locationAliases ?? []),
+      ...(destination.barangays ?? []),
+    ]),
+    ...cultureItems.map((item) => item.title),
+  ];
+
+  return records.some((record) => containsTerm(normalizedText, normalize(record)));
+}
+
+function matchesAllowedTopic(
+  normalizedText: string,
+  destinations: Destination[],
+  cultureItems: CultureItem[]
+): boolean {
+  if (OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(normalizedText))) return false;
+  if (hasKnownRecord(normalizedText, destinations, cultureItems)) return true;
+
+  return ALLOWED_TOPIC_PATTERNS.some((pattern) => pattern.test(normalizedText));
+}
+
+function isAscQuestion(
+  query: string,
+  history: AssistantChatMessage[],
+  destinations: Destination[],
+  cultureItems: CultureItem[]
+): boolean {
+  if (matchesAllowedTopic(normalize(query), destinations, cultureItems)) return true;
+  if (!isContextFollowUp(query)) return false;
+
+  return history.some(
+    (message) =>
+      message.role === "user" &&
+      message.content !== query &&
+      matchesAllowedTopic(normalize(message.content), destinations, cultureItems)
+  );
+}
+
+function eventItemsForQuery(query: string, cultureItems: CultureItem[]): CultureItem[] {
+  const normalized = normalize(query);
+  if (!EVENT_INTENT_PATTERN.test(normalized)) return cultureItems;
+
+  const dateMatch = query.match(DATE_PATTERN)?.[0];
+  if (dateMatch) {
+    const fragment = normalize(dateMatch).replace(/\b(?:st|nd|rd|th)\b/g, "");
+    return cultureItems.filter((item) => normalize(item.dateOrSchedule).includes(fragment));
+  }
+
+  if (/\b(upcoming|coming up|next events?|future events?)\b/u.test(normalized)) {
+    return cultureItems.filter(
+      (item) =>
+        !/schedule to be announced|details to be updated|check local schedules/i.test(
+          item.dateOrSchedule
+        )
+    );
+  }
+
+  return cultureItems;
 }
 
 // The newest user line is the real question; assistant lines are just context.
@@ -389,6 +484,17 @@ export function resolveAssistantAnswer(
   const current = latestUserMessage(history) || query;
   const normalized = normalize(current);
 
+  if (!isAscQuestion(current, history, destinations, cultureItems)) {
+    return {
+      text: OUT_OF_SCOPE_REPLY,
+      destinations: [],
+      scope: { type: "general", label: "Cordova", category: null, followUp: false },
+    };
+  }
+
+  const scopedCultureItems = eventItemsForQuery(current, cultureItems);
+  const requestedEventDate = current.match(DATE_PATTERN)?.[0];
+
   // Greetings do not need a database or directory lookup.
   if (/^(hi|hello|hey|greetings|mabuhay|good (morning|afternoon|evening))\b/.test(normalized)) {
     return {
@@ -410,15 +516,24 @@ export function resolveAssistantAnswer(
   }
 
   // Culture questions reuse the events loaded for the calendar and AI panel.
-  if (/festival|culture|cultural|event|fiesta/.test(normalized)) {
-    const item = cultureItems.find((culture) =>
-      containsTerm(normalized, normalize(culture.title))
-    ) ?? cultureItems[0];
+  if (EVENT_INTENT_PATTERN.test(normalized)) {
+    const item =
+      scopedCultureItems.find((culture) =>
+        containsTerm(normalized, normalize(culture.title))
+      ) ?? scopedCultureItems[0];
+
+    if (!item) {
+      return {
+        text: requestedEventDate
+          ? `There are currently no events listed in Asa Sa Cordova for ${requestedEventDate}.`
+          : "There are currently no upcoming events available in the system.",
+        destinations: [],
+        scope: { type: "general", label: "Cordova", category: null, followUp: false },
+      };
+    }
 
     return {
-      text: item
-        ? `${item.title} (${item.dateOrSchedule})\n\n${item.description}`
-        : "I couldn't find verified culture or event details in the ASC directory yet.",
+      text: `${item.title} (${item.dateOrSchedule})\n\n${item.description}`,
       destinations: [],
       scope: { type: "general", label: "Cordova", category: null, followUp: false },
     };

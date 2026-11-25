@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
   ArrowDown,
@@ -27,7 +27,9 @@ import DestinationMap from "@/components/guest/destination-map";
 
 import {
   API_BASE_URL,
+  clearDestinationsCache,
   fetchDestinationBySlug,
+  getRatingSummary,
   type Destination,
 } from "@/lib/destination-api";
 
@@ -73,6 +75,9 @@ function DestinationDetailsPage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [visitedMap, setVisitedMap] = useState<Record<string, VisitRecord>>({});
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState("");
+  const reviewsRequestRef = useRef(0);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
   const [reviewError, setReviewError] = useState("");
@@ -103,20 +108,45 @@ function DestinationDetailsPage() {
 
   // useCallback keeps this request function stable until the slug changes.
   const fetchReviews = useCallback(async () => {
+    const requestId = ++reviewsRequestRef.current;
+    setReviewsLoading(true);
+    setReviewsError("");
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/destinations/${slug}/reviews`, {
         headers: {
           Accept: "application/json",
         },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data);
+      if (!res.ok) {
+        throw new Error(`Unable to load reviews (${res.status}).`);
       }
+
+      const data: ReviewRecord[] = await res.json();
+      if (requestId === reviewsRequestRef.current) setReviews(data);
     } catch (err) {
-      console.error("Failed to fetch reviews", err);
+      if (requestId === reviewsRequestRef.current) {
+        setReviewsError(
+          err instanceof Error ? err.message : "Unable to load reviews."
+        );
+      }
+    } finally {
+      if (requestId === reviewsRequestRef.current) setReviewsLoading(false);
     }
   }, [slug]);
+
+  const refreshReviewsAndRating = useCallback(async () => {
+    await fetchReviews();
+    clearDestinationsCache();
+    if (!slug) return;
+
+    try {
+      const refreshed = await fetchDestinationBySlug(slug, true);
+      if (refreshed) setDestination(refreshed);
+    } catch (err) {
+      console.error("Failed to refresh the destination rating", err);
+    }
+  }, [fetchReviews, slug]);
 
   // Saved places and visits belong to signed-in users; guests keep empty state.
   useEffect(() => {
@@ -156,20 +186,8 @@ function DestinationDetailsPage() {
 
   // Reload reviews when the slug changes and clear any open edit/delete forms.
   useEffect(() => {
-    let active = true;
-
-    if (slug) {
-      fetch(`${API_BASE_URL}/api/destinations/${slug}/reviews`, {
-        headers: { Accept: "application/json" },
-      })
-        .then((res) => (res.ok ? res.json() : Promise.resolve([])))
-        .then((data: ReviewRecord[]) => {
-          if (active) setReviews(data);
-        })
-        .catch((err) => console.error("Failed to fetch reviews", err));
-    }
-
     const resetTimer = window.setTimeout(() => {
+      setReviews([]);
       setConfirmDeleteId(null);
       setEditingReviewId(null);
       setReplyingReviewId(null);
@@ -177,25 +195,22 @@ function DestinationDetailsPage() {
       setConfirmDeleteReplyId(null);
       setReviewError("");
       setActionError("");
+      void fetchReviews();
     }, 0);
 
     return () => {
-      active = false;
       window.clearTimeout(resetTimer);
     };
-  }, [slug]);
+  }, [slug, fetchReviews]);
 
   const isFavorited = slug ? favorites.includes(slug) : false;
   const visitRecord = slug ? visitedMap[slug] : undefined;
   const isVisited = !!visitRecord && visitRecord.count > 0;
 
-  // Adds only real database ratings and divides by the number of reviews.
-  const reviewCount = reviews.length;
-  const averageRating = useMemo(() => {
-    if (reviewCount === 0) return 0;
-    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-    return Number((sum / reviewCount).toFixed(1));
-  }, [reviews, reviewCount]);
+  const { count: reviewCount, average: averageRating } = getRatingSummary({
+    reviewsCount: destination?.reviewsCount ?? 0,
+    averageRating: destination?.averageRating ?? 0,
+  });
 
   // Show a simple skeleton while the destination request finishes.
   if (loadingDestination) {
@@ -289,7 +304,7 @@ function DestinationDetailsPage() {
 
       setNewComment("");
       setNewRating(5);
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : "Failed to submit review.");
     }
@@ -317,7 +332,7 @@ function DestinationDetailsPage() {
       }
 
       setEditingReviewId(null);
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to update review.");
     }
@@ -340,7 +355,7 @@ function DestinationDetailsPage() {
       }
 
       setConfirmDeleteId(null);
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to delete review.");
     }
@@ -368,7 +383,7 @@ function DestinationDetailsPage() {
 
       setReplyingReviewId(null);
       setReplyContent("");
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to post reply.");
     }
@@ -393,7 +408,7 @@ function DestinationDetailsPage() {
       }
 
       setEditingReplyId(null);
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to update reply.");
     }
@@ -416,7 +431,7 @@ function DestinationDetailsPage() {
       }
 
       setConfirmDeleteReplyId(null);
-      fetchReviews();
+      await refreshReviewsAndRating();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to delete reply.");
     }
@@ -801,7 +816,18 @@ function DestinationDetailsPage() {
                   <span className="text-xs text-white/50 font-medium">Verified Community Feedback</span>
                 </div>
 
-                {reviewCount > 0 ? (
+                {reviewsError && (
+                  <div className="rounded-2xl bg-red-950/80 p-4 text-xs font-medium text-red-200 border border-red-500/40 flex items-center gap-3" role="alert">
+                    <TriangleAlert size={18} strokeWidth={2} aria-hidden="true" className="shrink-0 text-red-400" />
+                    <span>{reviewsError}</span>
+                  </div>
+                )}
+
+                {reviewsLoading ? (
+                  <div className="rounded-3xl border border-white/15 bg-white/[0.04] p-10 text-center text-sm text-white/70 backdrop-blur-md">
+                    Loading reviews...
+                  </div>
+                ) : reviewCount > 0 ? (
                   reviews.map((rev) => {
                     const isOwner = token && rev.user_id === currentUserId;
                     const canModify = token && (isOwner || isAdmin);
@@ -1082,6 +1108,10 @@ function DestinationDetailsPage() {
                       </div>
                     );
                   })
+                ) : reviewsError ? (
+                  <div className="rounded-3xl border border-white/15 bg-white/[0.04] p-10 text-center text-sm text-white/70 backdrop-blur-md">
+                    Reviews could not be loaded right now. Please try again later.
+                  </div>
                 ) : (
                   <div className="rounded-3xl border border-white/15 bg-white/[0.04] p-10 text-center text-white/60 space-y-3 backdrop-blur-md">
                     <p className="flex justify-center">

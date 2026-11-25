@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ChevronRight, Heart, MapPinned } from "lucide-react";
+import { ChevronRight, Heart, Info, MapPinned } from "lucide-react";
 import Navbar from "@/components/common/navbar";
 
 function ProfilePage() {
@@ -62,6 +62,22 @@ function ProfilePage() {
                 <div>
                   <h2 className="text-sm font-semibold text-[#58111A]">Visited Spots</h2>
                   <p className="text-xs text-[#7A585B]">View destinations you explored</p>
+                </div>
+              </div>
+              <ChevronRight size={18} strokeWidth={2} aria-hidden="true" className="text-[#800020]" />
+            </Link>
+
+            <Link
+              to="/about"
+              className="flex items-center justify-between rounded-2xl border border-[#EBD5D3] bg-[#FAF6F5] p-5 transition hover:border-[#800020] hover:bg-[#FFF0F2] sm:col-span-2"
+            >
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF0F2] text-[#800020]">
+                  <Info size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-sm font-semibold text-[#58111A]">About Asa sa Cordova</h2>
+                  <p className="text-xs text-[#7A585B]">Read about the platform and its contact details</p>
                 </div>
               </div>
               <ChevronRight size={18} strokeWidth={2} aria-hidden="true" className="text-[#800020]" />

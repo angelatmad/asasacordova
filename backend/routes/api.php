@@ -377,6 +377,8 @@ Route::get('/destinations/{slug}/reviews', function ($slug) {
 });
 
 Route::middleware('auth:sanctum')->post('/destinations/{slug}/reviews', function (Request $request, $slug) {
+    Destination::query()->where('slug', $slug)->firstOrFail();
+
     $validated = $request->validate([
         'rating' => ['required', 'integer', 'min:1', 'max:5'],
         'comment' => ['required', 'string'],
